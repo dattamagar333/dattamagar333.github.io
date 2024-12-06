@@ -1,0 +1,98 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Text Extractor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>PDF Text Extractor</h1>
+        <form id="uploadForm">
+            <input type="file" id="pdfFile" accept=".pdf" required>
+            <button type="submit">Extract Text</button>
+        </form>
+        <div id="status"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+/* styles.css */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+input[type="file"] {
+    margin: 1rem 0;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+// script.js
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('pdfFile');
+    const statusDiv = document.getElementById('status');
+    
+    if (!fileInput.files.length) {
+        statusDiv.textContent = 'Please select a PDF file';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+        statusDiv.textContent = 'Uploading and processing...';
+        const response = await fetch('http://localhost:5000/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileInput.files[0].name.replace('.pdf', '_extracted.jsonl');
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        statusDiv.textContent = 'File processed successfully!';
+    } catch (error) {
+        console.error('Error:', error);
+        statusDiv.textContent = 'Error processing file';
+    }
+});
